@@ -58,7 +58,8 @@ class Board():
 class Pieces():
     def __init__(self, fen):
         self.fen = fen
-        self.positions = self.get_positions(fen, (0,0), -1)
+        self.positions = self.get_positions(fen, (0,0), -1, 'w')
+        self.color = fen.split(' ')[1]
         self.board = m.fen_to_list(self.fen)
         self.moves = {}
         self.image_path = {
@@ -82,13 +83,13 @@ class Pieces():
             'Q': 'images/w_q.png'
         }
         
-    def get_positions(self, fen, cursor_pos, click_i):
+    def get_positions(self, fen, cursor_pos, click_i, color):
         x = 0
         y = 0
         positions = {}
         board = m.fen_to_list(fen)
         for i in range(64):
-            if i == click_i and board[i] != ' ':
+            if i == click_i and board[i] != ' ' and m.get_color(board, click_i) == color:
                 positions[i] = '2;' + str(int(cursor_pos[0] - TILE_SIZE/2)) + ';' + str(int(cursor_pos[1] - TILE_SIZE/2))
             elif board[i] != ' ':
                 positions[i] = '1;' + str(x * TILE_SIZE) + ';' + str(y * TILE_SIZE)
@@ -103,6 +104,7 @@ class Pieces():
         cursor_pos = info['cursor_pos']
         full_move = info['full_move']
         click_i = info['click_i']
+        self.color = self.fen.split(' ')[1]
         self.board = m.fen_to_list(self.fen)
         if full_move != '':
             full_move = full_move.split(';')
@@ -113,11 +115,12 @@ class Pieces():
             if check != False:
                 self.fen = check
                 print('################')
+                print()
                 m.print_pieces(m.fen_to_list(self.fen))
             info['full_move'] = ''
-        else:
-            self.positions = self.get_positions(self.fen, cursor_pos, click_i)
-
+        elif full_move == '': 
+            self.positions = self.get_positions(self.fen, cursor_pos, click_i, self.color)
+            info['full_move'] = ''
    
     def o_draw(self, blit_surface):
         blit_order = {}
