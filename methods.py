@@ -34,7 +34,7 @@ def fen_to_list(fen):
     return arr
 
 # Converts array to fen string
-def list_to_fen(board_info):
+def list_to_fen(board_info, update = True):
 
     board = board_info['board']
     color = board_info['color']
@@ -67,6 +67,12 @@ def list_to_fen(board_info):
 
     # color
     fen_list[1] = color
+    if update:
+        new_color = {
+            'w': 'b',
+            'b': 'w'
+        }
+        fen_list[1] = new_color[color]
     # castling
     fen_list[2] = castle
     # en passant
@@ -120,7 +126,12 @@ def display_moves(board, moves):
 global distances
 distances = get_distances()
  
-
+def get_color(board, loc):
+    if board[loc].isupper():
+        return 'w'
+    elif board[loc].islower():
+        return 'b'
+        
 def check_teammate(color, board, new_index):
     new_color = ''
     if board[new_index] == ' ':
@@ -266,6 +277,7 @@ def pawn_move(board_info, distances = distances):
         # and checks target square color is not same
         # and checks if in valid position for en passant
         if en_passant != '-':
+            print(board_info['en_passant'])
             ep_index = ln_to_index(en_passant)
             if (board[ep_index + 8].islower() and
                 ((ep_index == loc - 9 and l_distance > 0) or 
@@ -686,19 +698,24 @@ def generate_move(board_info):
 
 def valid_move_check(fen, start, end):
 
-    fen = fen.split(' ')
-    board = fen_to_list(fen[0])
+    en_passant = fen.split(' ')[3]
+    color = fen.split(' ')[1]
+    board = fen_to_list(fen.split(' ')[0])
     
     board_info = {
         'board': board,
-        'color': fen[1],
+        'color': color,
         'castle': fen[2],
-        'en_passant': fen[3],
+        'en_passant': en_passant,
         'half_move_counter': fen[4],
         'full_move_counter': fen[5],
         'start': start,
         'end': end
     }
+
+    print(board_info['color'])
+    if get_color(board, start) != board_info['color']:
+        return False
 
     piece = board[start]
     
