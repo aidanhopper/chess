@@ -1,3 +1,18 @@
+def get_opp_color(color):
+    colors = {
+        'w': 'b',
+        'b': 'w'
+    }
+    return colors[color]
+
+def check_en_pawn(board, color, loc):
+    en_color = get_opp_color(color)
+    if en_color == 'w' and board[loc].isupper():
+        return True
+    elif en_color == 'b' and board[loc].islower():
+        return True
+    return False
+
 # converts letter number notation to usable index
 def ln_to_index(ln):
     # spliting string
@@ -50,7 +65,7 @@ def fen_to_list(fen):
     return arr
 
 # Converts array to fen string
-def list_to_fen(board_info, update = True):
+def list_to_fen(board_info):
 
     board = board_info['board']
     color = board_info['color']
@@ -83,12 +98,6 @@ def list_to_fen(board_info, update = True):
 
     # color
     fen_list[1] = color
-    if update:
-        new_color = {
-            'w': 'b',
-            'b': 'w'
-        }
-        fen_list[1] = new_color[color]
     # castling
     fen_list[2] = castle
     # en passant
@@ -360,20 +369,6 @@ def knight_move(board_info, distances = distances):
 
 def rook_move(board_info, distances = distances):
 
-    # NOTE
-    # FOR UP MOVE
-    # Check index-8 index and see if index is
-    # empty. If empty move to next index.
-    # If square is occupied by teammate then
-    # stop loop. If square is occupied by enemy
-    # add enemy square then stop loop
-    # FOR DOWN MOVE
-    # same thing but index+8
-    # FOR LEFT MOVE
-    # -1
-    # FOR RIGHT MOVE
-    # +1
-
     board = board_info['board']
     loc = board_info['start']
     color = ''
@@ -415,7 +410,7 @@ def rook_move(board_info, distances = distances):
     # down line move
     # add i * 8
     for i in range(1, b_distance + 1):
-        tar = loc - (i * 8)
+        tar = loc + (i * 8)
         if board[tar] == ' ':
             moves.append(tar)
         elif check_teammate(color, board, tar):
@@ -690,6 +685,40 @@ def king_move(board_info, distances = distances):
     if r_distance > 0 and not check_teammate(color, board, tar):
         moves.append(tar)
 
+    # castle move
+    if color == 'white':
+        castle_pot = {
+            'K': False,
+            'Q': False
+        }
+        for c in board_info['castle']:
+            if c.isupper():
+                castle_pot[c] = True
+        if castle_pot['K']: # 63
+            if board[62] == ' ' and board[61] == ' ':
+                moves.append(62)
+                info.append('castle;' + str(62) + ';' + str(61) + ';63')
+        if castle_pot['Q']: # 56
+            if board[57] == ' ' and board[58] == ' ' and board[59] == ' ':
+                moves.append(58)
+                info.append('castle;' + str(58) + ';' + str(59) + ';56')
+    elif color == 'black':
+        castle_pot = {
+            'k': False,
+            'q': False
+        }
+        for c in board_info['castle']:
+            if c.islower():
+                castle_pot[c] = True
+        if castle_pot['k']: # 63
+            if board[6] == ' ' and board[5] == ' ':
+                moves.append(6)
+                info.append('castle;' + str(6) + ';' + str(5) + ';7')
+        if castle_pot['q']: # 56
+            if board[1] == ' ' and board[2] == ' ' and board[3] == ' ':
+                moves.append(2)
+                info.append('castle;' + str(2) + ';' + str(3) + ';0')
+    
     return moves, info
 
 def generate_move(board_info):
@@ -711,6 +740,82 @@ def generate_move(board_info):
     moves, info = method_dic[std_piece]
     return moves, info
 
+
+
+def castle_check(board_info):
+
+    if board_info['castle'] == '--':
+        return '--'
+
+    castle = board_info['castle']
+    board = board_info['board']
+    
+    one = ''
+    two = ''
+    
+    castle_pot = {
+        'K': False,
+        'Q': False,
+        'k': False,
+        'q': False
+    }
+
+    for c in castle:
+        if c != '-':
+            castle_pot[c] = True
+
+        
+    if castle_pot['K'] or castle_pot['Q']:
+    #if True:
+        # check if white king is in starting position (60)
+        if board[60] != 'K':
+            castle_pot['K'] = False
+            castle_pot['Q'] = False
+        
+        # left side white rook (56)
+        if board[56] != 'R':
+            castle_pot['Q'] = False
+
+            # right side white rook (63)
+        if board[63] != 'R':
+            castle_pot['K'] = False
+
+    
+    if castle_pot['k'] or castle_pot['q']:
+    #if True:
+    # check if black king is in starting position (4)
+        if board[4] != 'k':
+            castle_pot['k'] = False
+            castle_pot['q'] = False
+        
+    # left side black rook
+        if board[0] != 'r':
+            castle_pot['q'] = False
+
+    # right side black rook
+        if board[7] != 'r':
+            castle_pot['k'] = False
+
+    # building castle string
+    if not castle_pot['K'] and not castle_pot['Q']:
+        one = '-'
+    else:
+        if castle_pot['K']:
+            one = 'K'
+        if castle_pot['Q']:
+            one = one + 'Q'
+
+    if not castle_pot['k'] and not castle_pot['q']:
+        two = '-'
+    else:
+        if castle_pot['k']:
+            two = 'k'
+        if castle_pot['q']:
+            two = two + 'q'
+
+    return one + two
+
+        
 def valid_move_check(fen, start, end):
 
     full_move_counter = fen.split(' ')[5]
@@ -735,8 +840,10 @@ def valid_move_check(fen, start, end):
         return False
 
     piece = board[start]
-    
+    # generating possible pesudo moves
     moves, move_info = generate_move(board_info)
+
+    # resetting en passant
     board_info['en_passant'] = '-'
         
     if end in moves:
@@ -744,33 +851,24 @@ def valid_move_check(fen, start, end):
         for info in move_info:
             parsed_info = info.split(';')
             if parsed_info[0] == 'pawn_jump' and int(parsed_info[1]) == end:
-                board_info['en_passant'] = index_to_ln(int(parsed_info[2]))
+                left_side = int(parsed_info[1]) - 1
+                right_side = int(parsed_info[1]) + 1
+                if check_en_pawn(board, color, left_side) or check_en_pawn(board, color, right_side):
+                    board_info['en_passant'] = index_to_ln(int(parsed_info[2]))
             elif parsed_info[0] == 'en_passant' and int(parsed_info[1]) == end:
                 board[int(parsed_info[2])] = ' '
-
+            elif parsed_info[0] == 'castle' and int(parsed_info[1]) == end:
+                board[int(parsed_info[2])] = board[int(parsed_info[3])]
+                board[int(parsed_info[3])] = ' '
+                
         board[end] = piece
         board[start] = ' '
+        board_info['castle'] = castle_check(board_info)
+        board_info['color'] = get_opp_color(color)
         new_fen = (board_info)
         new_fen = list_to_fen(board_info)   
         return new_fen
     return False
     
-# what is this for?
-def check_index(board, *indexs):
-    dic = {}
-    for index in indexs:
-        x = board[index]
-        dic[index] = x
-    return dict
-
-
-# FEN  = 'rPbqkbnr/pppppppp/8/3Q4/Pp6/8/PPPPPPP1/RNBQKBNR w KQkq a3 0 1'
-# LOC = 3
-# LOC = 27
-# LOC = 62
-# board = fen_to_list(FEN)
-# moves, special = generate_move(FEN, LOC)
-# print_pieces(display_moves(board, moves))
-# print(LOC)
-# print(moves)
-
+#FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+#moves = valid_move_check(FEN, 1, 2)
