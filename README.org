@@ -7,6 +7,7 @@ This is the second version of my chess program with a multitude of backend impro
 The end goal for this project is to have an expandable chess system which can be used to create a chess bot.
 
 * TODOs
-- Add pawn promotion and castling support for backend
+- Add pawn promotion GUI
+- Build system for detecting check
 - Create playable chess front end application.
 - Create a bot to play chess against.
