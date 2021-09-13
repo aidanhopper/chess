@@ -18,6 +18,22 @@ def ln_to_index(ln):
     index = row * 8 + col
     return index
 
+def index_to_ln(index):
+    row = 8 - (index // 8)
+    column = index % 8
+    columns = {
+        0: 'a',
+        1: 'b',
+        2: 'c',
+        3: 'd',
+        4: 'e',
+        5: 'f',
+        6: 'g',
+        7: 'h'
+    }
+    string = columns[column] + str(row)
+    return string
+    
 # Converts fen string to list
 def fen_to_list(fen):
     arr = []
@@ -198,7 +214,7 @@ def pawn_move(board_info, distances = distances):
         if (loc < 16 and board[loc + 8] == ' ' and
             board[loc + 16] == ' '):
             moves.append(loc + 16)
-            info.append('pawn_jump;' + str(loc + 16))
+            info.append('pawn_jump;' + str(loc + 16) + ';' + str(loc + 8))
 
         # -- LEFT ATTACK -- +7
         # checks if left attack is on board
@@ -232,7 +248,7 @@ def pawn_move(board_info, distances = distances):
                 ((ep_index == loc + 9 and r_distance > 0) or
                  (ep_index == loc + 7 and l_distance > 0))):
                 moves.append(ep_index)
-                info.append('en_passant;' + str(ep_index))
+                info.append('en_passant;' + str(ep_index) +  ';' + str(ep_index - 8))
 
     elif color == 'white':
         ### white pawn ###
@@ -251,7 +267,7 @@ def pawn_move(board_info, distances = distances):
         if (loc > 46 and board[loc - 8] == ' ' and 
             board[loc - 16] == ' '):
             moves.append(loc - 16)
-            info.append('pawn_jump;' + str(loc - 16))
+            info.append('pawn_jump;' + str(loc - 16) + ';' + str(loc - 8))
 
         # -- LEFT ATTACK -- -9
         # checks if left attack is on board
@@ -277,13 +293,12 @@ def pawn_move(board_info, distances = distances):
         # and checks target square color is not same
         # and checks if in valid position for en passant
         if en_passant != '-':
-            print(board_info['en_passant'])
             ep_index = ln_to_index(en_passant)
             if (board[ep_index + 8].islower() and
                 ((ep_index == loc - 9 and l_distance > 0) or 
                  (ep_index == loc - 7 and r_distance > 0))):
                 moves.append(ep_index)
-                info.append('en_passant;' + str(ep_index))
+                info.append('en_passant;' + str(ep_index) + ';' + str(ep_index + 8))
     return moves, info
 
 
@@ -698,6 +713,9 @@ def generate_move(board_info):
 
 def valid_move_check(fen, start, end):
 
+    full_move_counter = fen.split(' ')[5]
+    half_move_counter = fen.split(' ')[4]
+    castle = fen.split(' ')[2]
     en_passant = fen.split(' ')[3]
     color = fen.split(' ')[1]
     board = fen_to_list(fen.split(' ')[0])
@@ -705,22 +723,31 @@ def valid_move_check(fen, start, end):
     board_info = {
         'board': board,
         'color': color,
-        'castle': fen[2],
+        'castle': castle,
         'en_passant': en_passant,
-        'half_move_counter': fen[4],
-        'full_move_counter': fen[5],
+        'half_move_counter': half_move_counter,
+        'full_move_counter': full_move_counter,
         'start': start,
-        'end': end
+        'end': end,
     }
 
-    print(board_info['color'])
     if get_color(board, start) != board_info['color']:
         return False
 
     piece = board[start]
     
     moves, move_info = generate_move(board_info)
+    board_info['en_passant'] = '-'
+        
     if end in moves:
+
+        for info in move_info:
+            parsed_info = info.split(';')
+            if parsed_info[0] == 'pawn_jump' and int(parsed_info[1]) == end:
+                board_info['en_passant'] = index_to_ln(int(parsed_info[2]))
+            elif parsed_info[0] == 'en_passant' and int(parsed_info[1]) == end:
+                board[int(parsed_info[2])] = ' '
+
         board[end] = piece
         board[start] = ' '
         new_fen = (board_info)
