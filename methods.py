@@ -214,7 +214,7 @@ def pawn_move(board_info, distances = distances):
         if b_distance > 0 and board[loc + 8] == ' ':
             moves.append(loc + 8)
             if loc + 8 > 55:
-                info.append('pawn_promo;' + str(loc + 8))
+                info.append('pawn_promo;' + str(loc + 8) + ';b')
         
         # -- PAWN JUMP MOVE -- +16
         # checks if pawn on beginning row
@@ -223,7 +223,7 @@ def pawn_move(board_info, distances = distances):
         if (loc < 16 and board[loc + 8] == ' ' and
             board[loc + 16] == ' '):
             moves.append(loc + 16)
-            info.append('pawn_jump;' + str(loc + 16) + ';' + str(loc + 8))
+            info.append('pawn_jump;' + str(loc + 16) + ';' + str(loc + 8) + ';b')
 
         # -- LEFT ATTACK -- +7
         # checks if left attack is on board
@@ -233,7 +233,7 @@ def pawn_move(board_info, distances = distances):
             board[loc + 7].isupper()):
             moves.append(loc + 7)
             if loc + 7 > 55:
-                info.append('pawn_promo;' + str(loc + 7))
+                info.append('pawn_promo;' + str(loc + 7) + ';b')
 
 
         # -- RIGHT ATTACK -- +9
@@ -244,7 +244,7 @@ def pawn_move(board_info, distances = distances):
             board[loc + 9].isupper()):
             moves.append(loc + 9)
             if loc + 9 > 55:
-                info.append('pawn_promo;' + str(loc + 9))
+                info.append('pawn_promo;' + str(loc + 9) + ';b')
 
 
         # -- EN PASSANT ATTACK -- -8
@@ -267,7 +267,7 @@ def pawn_move(board_info, distances = distances):
         if t_distance > 0 and board[loc - 8] == ' ':
             moves.append(loc - 8)
             if loc - 8 < 8:
-                info.append('pawn_promo;' + str(loc - 8))
+                info.append('pawn_promo;' + str(loc - 8) + ';w')
          
         # -- PAWN JUMP MOVE -- -16
         # checks if pawn is on beginning row
@@ -285,7 +285,7 @@ def pawn_move(board_info, distances = distances):
             board[loc - 9].islower()):
             moves.append(loc - 9)
             if loc - 9 < 8:
-                info.append('pawn_promo' + str(loc - 9))
+                info.append('pawn_promo' + str(loc - 9) + ';w')
 
         # -- RIGHT ATTACK -- -7
         # checks if right attack is on board
@@ -294,7 +294,8 @@ def pawn_move(board_info, distances = distances):
             board[loc - 7].islower()):
             moves.append(loc - 7)
             if loc - 7 < 8:
-                info.append('pawn_promo' + str(loc - 7))
+                info.append('pawn_promo' + ';' + str(loc - 7) + ';w')
+                print(info)
 
 
         # -- EN PASSANT ATTACK -- +8
@@ -815,7 +816,28 @@ def castle_check(board_info):
 
     return one + two
 
-        
+def pawn_promo(parsed_info, AUTO_P = None):
+    while True:
+        switch = {
+            '1': 'q',
+            '2': 'b',
+            '3': 'r',
+            '4': 'n'
+        }
+        print('Choice\n 1. Queen\n 2. Bishop \n 3. Rook \n 4. Knight \n')
+        if AUTO_P == None:
+            choice = input()
+        else:
+            choice = AUTO_P
+        if choice in switch.keys():
+            if parsed_info[2] == 'w':
+                piece = switch[choice].upper()
+                return piece
+            elif parsed_info[2] == 'b':
+                piece = switch[choice]
+                return piece
+            else: print('invalid input try again\n')
+
 def valid_move_check(fen, start, end):
 
     full_move_counter = fen.split(' ')[5]
@@ -860,7 +882,9 @@ def valid_move_check(fen, start, end):
             elif parsed_info[0] == 'castle' and int(parsed_info[1]) == end:
                 board[int(parsed_info[2])] = board[int(parsed_info[3])]
                 board[int(parsed_info[3])] = ' '
-                
+            elif parsed_info[0] == 'pawn_promo':
+                # remove AUTO_P for console input
+                piece = pawn_promo(parsed_info, AUTO_P='1')
         board[end] = piece
         board[start] = ' '
         board_info['castle'] = castle_check(board_info)
