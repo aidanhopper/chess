@@ -8,6 +8,5 @@ The end goal for this project is to have an expandable chess system which can be
 
 * TODOs
 - Add pawn promotion and castling support for backend
-- Add check to en passant so that it only displays when pawn is able to perform en passant
 - Create playable chess front end application.
 - Create a bot to play chess against.
