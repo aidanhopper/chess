@@ -116,11 +116,12 @@ class Pieces():
                 self.fen = check
                 print('################')
                 print()
+                print(self.fen)
+                print()
                 m.print_pieces(m.fen_to_list(self.fen))
             info['full_move'] = ''
         elif full_move == '': 
             self.positions = self.get_positions(self.fen, cursor_pos, click_i, self.color)
-            info['full_move'] = ''
    
     def o_draw(self, blit_surface):
         blit_order = {}
