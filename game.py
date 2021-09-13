@@ -1,7 +1,7 @@
 import sys
 import pygame
 import numpy as np
-import methods as m
+import functions as m
 
 pygame.init()
 
@@ -139,7 +139,6 @@ class Pieces():
                 blit_surface.blit(pygame.transform.scale(pygame.image.load(
                     self.image_path[self.board[int(index)]]), (TILE_SIZE, TILE_SIZE)), pos)
                 
-
             
 def get_mouse_i(cursor_pos):
     x = int(cursor_pos[0]/TILE_SIZE)
