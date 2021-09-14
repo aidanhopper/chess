@@ -64,7 +64,6 @@ def index_to_ln(index):
 def fen_to_list(fen):
     arr = []
     board = fen.split(' ')[0].split('/')
-    #print(fen)
     for row in range(len(board)):
         line = board[row]
         for char in line:
@@ -306,7 +305,6 @@ def pawn_move(board_info, distances = distances):
             moves.append(loc - 7)
             if loc - 7 < 8:
                 info.append('pawn_promo' + ';' + str(loc - 7) + ';w')
-                print(info)
 
 
         # -- EN PASSANT ATTACK -- +8
@@ -707,11 +705,11 @@ def king_move(board_info, distances = distances):
             if c.isupper():
                 castle_pot[c] = True
         if castle_pot['K']: # 63
-            if board[62] == ' ' and board[61] == ' ':
+            if board[62] == ' ' and board[61] == ' ' and not in_check(board_info):
                 moves.append(62)
                 info.append('castle;' + str(62) + ';' + str(61) + ';63')
         if castle_pot['Q']: # 56
-            if board[57] == ' ' and board[58] == ' ' and board[59] == ' ':
+            if board[57] == ' ' and board[58] == ' ' and board[59] == ' ' and not in_check(board_info):
                 moves.append(58)
                 info.append('castle;' + str(58) + ';' + str(59) + ';56')
     elif color == 'black':
@@ -723,11 +721,11 @@ def king_move(board_info, distances = distances):
             if c.islower():
                 castle_pot[c] = True
         if castle_pot['k']: # 63
-            if board[6] == ' ' and board[5] == ' ':
+            if board[6] == ' ' and board[5] == ' ' and not in_check(board_info):
                 moves.append(6)
                 info.append('castle;' + str(6) + ';' + str(5) + ';7')
         if castle_pot['q']: # 56
-            if board[1] == ' ' and board[2] == ' ' and board[3] == ' ':
+            if board[1] == ' ' and board[2] == ' ' and board[3] == ' ' and not in_check(board_info):
                 moves.append(2)
                 info.append('castle;' + str(2) + ';' + str(3) + ';0')
     
@@ -779,7 +777,7 @@ def castle_check(board_info):
         
     if castle_pot['K'] or castle_pot['Q']:
     #if True:
-        # check if white king is in starting position (60)
+        # check if white kingis in starting position (60)
         if board[60] != 'K':
             castle_pot['K'] = False
             castle_pot['Q'] = False
@@ -849,6 +847,29 @@ def pawn_promo(parsed_info, AUTO_P = None):
                 return piece
             else: print('invalid input try again\n')
 
+def in_check(board_info):
+    board = board_info['board']
+    color = board_info['color']
+    opp_color = get_opp_color(color)
+    king_index = -1
+    for i in range(63):
+        if board[i].lower() == 'k' and is_color(board, i, color):
+            king_index = i
+            break
+    for i in range(63):
+        if board[i] != ' ' and is_color(board, i, opp_color):
+            new_board_info = {
+                'board': board,
+                'color': opp_color,
+                'castle': board_info['castle'],
+                'en_passant': board_info['en_passant'],
+                'start': i
+            }
+            moves, move_info = generate_move(new_board_info)
+            if king_index in moves:
+                return True
+    return False
+            
 # i think this works but it needs a lot of testing
 def rm_invalid_moves(board_info, moves):
     valid_moves = []
@@ -883,6 +904,8 @@ def rm_invalid_moves(board_info, moves):
             if append:
                 valid_moves.append(move)
     return valid_moves
+
+FEN = 'r3kbnr/pppppppp/8/7B/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1'
 
 def valid_move_check(fen, start, end):
 
