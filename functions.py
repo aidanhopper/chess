@@ -1,3 +1,5 @@
+import copy
+
 def get_opp_color(color):
     colors = {
         'w': 'b',
@@ -5,11 +7,20 @@ def get_opp_color(color):
     }
     return colors[color]
 
+def is_color(board, loc, color):
+    if color == 'w':
+        if board[loc].isupper():
+            return True
+    elif color == 'b':
+        if board[loc].islower():
+            return True
+    return False
+
 def check_en_pawn(board, color, loc):
     en_color = get_opp_color(color)
-    if en_color == 'w' and board[loc].isupper():
+    if en_color == 'w' and board[loc].isupper() and board[loc].lower() == 'p':
         return True
-    elif en_color == 'b' and board[loc].islower():
+    elif en_color == 'b' and board[loc].islower() and board[loc].lower() == 'p':
         return True
     return False
 
@@ -838,6 +849,41 @@ def pawn_promo(parsed_info, AUTO_P = None):
                 return piece
             else: print('invalid input try again\n')
 
+# i think this works but it needs a lot of testing
+def rm_invalid_moves(board_info, moves):
+    valid_moves = []
+    res_color = get_opp_color(board_info['color'])
+    king_index = -1
+    if board_info['end'] in moves:    
+        for move in moves:
+            # sets up move
+            board_c = copy.deepcopy(board_info['board'])
+            board_c[move] = board_c[board_info['start']]
+            board_c[board_info['start']] = ' '
+
+            #generate possible responses
+            res_moves_full = []
+            for i in range(63):
+                if board_c[i].lower() == 'k' and is_color(board_c, i, board_info['color']):
+                    king_index = i
+                if is_color(board_c, i, res_color):
+                    board_c_info = {
+                        'board': board_c,
+                        'color': res_color,
+                        'castle': board_info['castle'],
+                        'en_passant': board_info['en_passant'],
+                        'start': i
+                    }
+                    res_moves, res_move_info = generate_move(board_c_info)
+                    res_moves_full.extend(res_moves)
+            append = True
+            for res_move in res_moves_full:
+                if res_move == king_index:
+                    append = False
+            if append:
+                valid_moves.append(move)
+    return valid_moves
+
 def valid_move_check(fen, start, end):
 
     full_move_counter = fen.split(' ')[5]
@@ -864,6 +910,7 @@ def valid_move_check(fen, start, end):
     piece = board[start]
     # generating possible pesudo moves
     moves, move_info = generate_move(board_info)
+    moves = rm_invalid_moves(board_info, moves)
 
     # resetting en passant
     board_info['en_passant'] = '-'
